@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智慧树测试</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            color: #333;
+            background: #f9f9f9;
+            line-height: 1.6;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #2c7a7b;
+        }
+        .question {
+            margin: 10px 0;
+        }
+        button {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            background: #2c7a7b;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        canvas {
+            margin: 20px auto;
+        }
+        .result {
+            text-align: center;
+            font-size: 1.1em;
+            margin-top: 20px;
+            color: #2c7a7b;
+        }
+        .back-to-article {
+            text-align: center;
+            margin-top: 30px;
+        }
+        .back-to-article a {
+            color: #2c7a7b;
+            font-size: 1.2em;
+            text-decoration: none;
+        }
+        .back-to-article a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h1>🌳 智慧树短板测试 🌳</h1>
+    <p>通过 15 道问题，发现你的潜在短板和优势！测试完成后将生成详细的能力分析图。</p>
+    <form id="testForm">
+        <div id="questions"></div>
+        <button type="button" onclick="calculateScores()">提交测试</button>
+    </form>
+    <canvas id="radarChart" width="500" height="500"></canvas>
+    <div id="result" class="result"></div>
+
+    <div class="back-to-article">
+        <a href="你的微信公众号文章链接">⬅️ 返回原文</a>
+    </div>
+
+    <script>
+        const questions = [
+            // 生存根基
+            { category: "Roots", question: "你每天能保持高水平专注（避免分心）至少半小时吗？" },
+            { category: "Roots", question: "你能在低潮期迅速调整状态，避免持续硬撑吗？" },
+            { category: "Roots", question: "你是否避免暴饮暴食和长期不健康饮食？" },
+            { category: "Roots", question: "你能快速分析信息的可靠性，避免轻信谣言吗？" },
+            { category: "Roots", question: "面对压力事件，你能迅速找到释放方式吗？" },
+
+            // 核心主干
+            { category: "Trunk", question: "你在复杂决策时能权衡短期收益与长期影响吗？" },
+            { category: "Trunk", question: "新知识学之后，你能有效运用到实践中吗？" },
+            { category: "Trunk", question: "你能在冲突中找到双方都接受的解决方案吗？" },
+            { category: "Trunk", question: "任务多时，你能优先处理最重要的事吗？" },
+            { category: "Trunk", question: "你能快速学习新技术（如AI工具）并适应使用吗？" },
+
+            // 繁茂枝叶
+            { category: "Leaves", question: "预算有限时，你能清晰规划优先开支吗？" },
+            { category: "Leaves", question: "你能用零碎时间，学习提升技能拓宽竞争力吗？" },
+            { category: "Leaves", question: "你能快速判断新关系的价值和边界吗？" },
+            { category: "Leaves", question: "你的生活环境美观且让你感到放松吗？" },
+            { category: "Leaves", question: "你是否提前准备了应对危机的方案（如应急资金）？" }
+        ];
+
+        const container = document.getElementById("questions");
+        questions.forEach((q, index) => {
+            const div = document.createElement("div");
+            div.classList.add("question");
+            div.innerHTML = `
+                <label>${index + 1}. ${q.question}</label>
+                <select name="q${index}" required>
+                    <option value="2">是</option>
+                    <option value="1">一般</option>
+                    <option value="0">否</option>
+                </select>
+            `;
+            container.appendChild(div);
+        });
+
+        function generateFeedback(scores) {
+            let feedback = "🌳 测试结果 🌳\n";
+            feedback += `生存根基：${scores.Roots}\n`;
+            feedback += `核心主干：${scores.Trunk}\n`;
+            feedback += `繁茂枝叶：${scores.Leaves}\n`;
+
+            feedback += "\n🛠 优势与改进建议：\n";
+            if (scores.Roots >= 80) {
+                feedback += "✔️ 你的生存根基非常扎实，健康与专注力管理能力都很优秀！\n";
+            } else if (scores.Roots < 50) {
+                feedback += "⚠️ 生存根基较弱，可优化饮食睡眠和压力释放，关注长期健康。\n";
+            }
+
+            if (scores.Trunk >= 80) {
+                feedback += "✔️ 核心主干能力很棒，你能驾驭复杂的决策与人际关系！\n";
+            } else if (scores.Trunk < 50) {
+                feedback += "⚠️ 核心主干略显不足，可加强系统性思维与深度学习能力。\n";
+            }
+
+            if (scores.Leaves >= 80) {
+                feedback += "✔️ 你的繁茂枝叶非常丰富，生活技能与审美令人羡慕！\n";
+            } else if (scores.Leaves < 50) {
+                feedback += "⚠️ 繁茂枝叶较弱，可加强危机管理与品质提升能力。\n";
+            }
+
+            return feedback;
+        }
+
+        function calculateScores() {
+            const form = document.getElementById("testForm");
+            const data = new FormData(form);
+            const scores = { Roots: 0, Trunk: 0, Leaves: 0 };
+            const counts = { Roots: 0, Trunk: 0, Leaves: 0 };
+
+            questions.forEach((q, index) => {
+                const score = parseInt(data.get(`q${index}`));
+                scores[q.category] += score;
+                counts[q.category] += 2;
+            });
+
+            const results = {
+                Roots: Math.round((scores.Roots / counts.Roots) * 100),
+                Trunk: Math.round((scores.Trunk / counts.Trunk) * 100),
+                Leaves: Math.round((scores.Leaves / counts.Leaves) * 100)
+            };
+
+            const ctx = document.getElementById("radarChart").getContext("2d");
+            new Chart(ctx, {
+                type: "radar",
+                data: {
+                    labels: ["生存根基", "核心主干", "繁茂枝叶"],
+                    datasets: [{
+                        label: "智慧树能力评估",
+                        data: [results.Roots, results.Trunk, results.Leaves],
+                        backgroundColor: "rgba(44, 122, 123, 0.5)",
+                        borderColor: "rgba(44, 122, 123, 0.8)",
+                        borderWidth: 2,
+                        pointBackgroundColor: "rgba(44, 122, 123, 1)"
+                    }]
+                },
+                options: {
+                    scales: {
+                        r: {
+                            suggestedMin: 0,
+                            suggestedMax: 100,
+                            ticks: {
+                                stepSize: 20,
+                                callback: function (value) {
+                                    return value + '%';
+                                }
+                            },
+                            grid: {
+                                color: "#ccc"
+                            },
+                            angleLines: {
+                                color: "#ddd"
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+
+            document.getElementById("result").textContent = generateFeedback(results);
+        }
+    </script>
+<script>window.parent.postMessage({ action: "ready" }, "*"); 
+ 
+window.console = new Proxy(console, {
+  get(target, prop) {
+    if (['log', 'warn', 'error'].includes(prop)) {
+      return new Proxy(target[prop], {
+        apply(fn, thisArg, args) {
+          fn.apply(thisArg, args);
+          window.parent.postMessage({ action: 'console', 
+            type: prop, 
+            args: args.map((arg) => {
+              try {
+                return JSON.stringify(arg).replace(/^["']|["']$/g, '');
+              } catch (e) {
+                return arg;
+              }
+            }) 
+          }, '*');
+        }
+      });
+    }
+    return target[prop];
+  }
+});
+</script></body>
+</html>
